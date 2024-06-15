@@ -8,10 +8,15 @@ services:
     cap_add:
       - NET_ADMIN
     environment:
-      - EASYRSA_KEY_SIZE=4096
+      - EASYRSA_KEY_SIZE={VPN_EASYRSA_KEY_SIZE}
       - EASYRSA_REQ_CN=${VPN_ENDPOINT_DNS}
     volumes:
       - ${VPN_MOUNT_PATH}:/etc/openvpn
+      - ${VPN_MOUNT_PATH}/log:/tmp/openvpn-status.log
+    sysctls:
+      - net.ipv6.conf.default.forwarding=1
+      - net.ipv6.conf.all.forwarding=1
+    network_mode: host
     restart: always
 
   openvpn-exporter:
@@ -26,34 +31,55 @@ services:
     volumes:
       - ${VPN_MOUNT_PATH}/openvpn-status.status:/etc/openvpn_exporter/openvpn-status.status
 
-  prometheus:
+  openvpn-monitor:
     depends_on:
-      - openvpn-exporter
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: unless-stopped
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
+      - openvpn
+    image: ruimarinho/openvpn-monitor
+    container_name: openvpn-monitor
     ports:
-      - 9090:9090
-    volumes:
-      - db:/prometheus
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - 80:80
+    environment:
+      OPENVPNMONITOR_DEFAULT_DATETIMEFORMAT: "%%d/%%m/%%Y"
+      OPENVPNMONITOR_DEFAULT_LATITUDE: -37
+      OPENVPNMONITOR_DEFAULT_LOGO: logo.jpg
+      OPENVPNMONITOR_DEFAULT_LONGITUDE: 144
+      OPENVPNMONITOR_DEFAULT_MAPS: True
+      OPENVPNMONITOR_DEFAULT_MAPSHEIGHT: 500
+      OPENVPNMONITOR_DEFAULT_SITE: Test
+      OPENVPNMONITOR_SITES_0_ALIAS: UDP
+      OPENVPNMONITOR_SITES_0_HOST: openvpn
+      OPENVPNMONITOR_SITES_0_NAME: UDP
+      OPENVPNMONITOR_SITES_0_PORT: 5555
+      OPENVPNMONITOR_SITES_0_SHOWDISCONNECT: True
 
-  grafana:
-    depends_on:
-      - prometheus
-    image: grafana/grafana:latest
-    container_name: grafana
-    restart: unless-stopped
-    env_file:
-      - ./envs/grafana.env
-    volumes:
-      - db:/var/lib/grafana
-      - ./grafana/provisioning/:/etc/grafana/provisioning/:ro
-      - ./grafana/dashboards/openvpn-dashboard.json:/var/lib/grafana/dashboards/openvpn-dashboard.json
-    ports:
-      - 3000:3000
+  # prometheus:
+  #   depends_on:
+  #     - openvpn-exporter
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   restart: unless-stopped
+  #   command:
+  #     - "--config.file=/etc/prometheus/prometheus.yml"
+  #   ports:
+  #     - 9090:9090
+  #   volumes:
+  #     - db:/prometheus
+  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  # grafana:
+  #   depends_on:
+  #     - prometheus
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   restart: unless-stopped
+  #   env_file:
+  #     - ./envs/grafana.env
+  #   volumes:
+  #     - db:/var/lib/grafana
+  #     - ./grafana/provisioning/:/etc/grafana/provisioning/:ro
+  #     - ./grafana/dashboards/openvpn-dashboard.json:/var/lib/grafana/dashboards/openvpn-dashboard.json
+  #   ports:
+  #     - 3000:3000
 
 volumes:
   db:

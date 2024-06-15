@@ -8,6 +8,13 @@ locals {
       cidr_blocks = var.allowed_cidr_blocks
     },
     {
+      description = "HTTP"
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      cidr_blocks = var.allowed_cidr_blocks
+    },
+    {
       description = "vpn RPC"
       from_port   = 1194
       to_port     = 1194
