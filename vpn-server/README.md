@@ -92,13 +92,32 @@ cd ./examples/vpn-server/docker
 ls /mnt/vpn/
 ```
 
-vpn 서버 실행
+### IP 포워딩 설정
+```bash
+sudo vi /etc/sysctl.conf
+
+# 설정
+net.ipv4.ip_forward=1
+
+# /etc/sysctl.conf 파일에서 설정 적용
+sudo sysctl -p
+
+# 서버 재시작
+sudo reboot
 ```
+
+
+### IP Table 설정
+```bash
+# NAT 설정
+sudo iptables -t nat -A POSTROUTING -s 10.100.0.0/16 -o ens5 -j MASQUERADE
+# 포워딩 규칙 설정
+sudo iptables -A FORWARD -i tun0 -o ens5 -j ACCEPT
+sudo iptables -A FORWARD -i ens5 -o tun0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+```
+
+### vpn 서버 실행
+```bash
 # examples/vpn-server/docker 에서 실행해야 한다.
 docker compose up -d
 ```
-
-prometheus: http://{YOUR_INSTANE_PUB_IP}:9090
-grafana: http://{YOUR_INSTANE_PUB_IP}:3000
-- Id: admin
-- Pass: 1234

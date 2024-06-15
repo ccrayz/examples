@@ -19,7 +19,9 @@ docker compose run --rm openvpn ovpn_genconfig -u udp://$VPN_ENDPOINT_DNS
 OPENVPN_SERVER_CONF_PATH=/mnt/vpn/openvpn.conf
 sed -i 's/192.168.255.0/10.100.0.0/g' $OPENVPN_SERVER_CONF_PATH
 sed -i 's/192.168.254.0/10.0.0.0/g' $OPENVPN_SERVER_CONF_PATH
-echo client-to-client >> $OPENVPN_SERVER_CONF_PATH
+sed -i 's/255.255.255.0/255.255.0.0/g' $OPENVPN_SERVER_CONF_PATH
+sed -i 's/push \"block-outside-dns\"//g' $OPENVPN_SERVER_CONF_PATH
+
 echo "### openvpn management" >> $OPENVPN_SERVER_CONF_PATH
 echo "management 0.0.0.0 5555" >> $OPENVPN_SERVER_CONF_PATH
 
