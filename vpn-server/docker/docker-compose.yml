@@ -1,4 +1,5 @@
-version: "3"
+version: "3.9"
+
 services:
   openvpn:
     image: kylemanna/openvpn
@@ -14,19 +15,8 @@ services:
       - ${VPN_MOUNT_PATH}:/etc/openvpn
       - ${VPN_MOUNT_PATH}/log:/tmp/openvpn-status.log
     network_mode: host
-    restart: always
-
-  openvpn-exporter:
-    depends_on:
-      - openvpn
-    image: kumina/openvpn-exporter
-    container_name: openvpn-exporter
-    ports:
-      - 9176:9176
-    command:
-      - -openvpn.status_paths=/etc/openvpn_exporter/openvpn-status.status
-    volumes:
-      - ${VPN_MOUNT_PATH}/openvpn-status.status:/etc/openvpn_exporter/openvpn-status.status
+    restart: unless-stopped
+    stop_grace_period: 30s
 
   openvpn-monitor:
     depends_on:
@@ -38,45 +28,16 @@ services:
     environment:
       OPENVPNMONITOR_DEFAULT_DATETIMEFORMAT: "%%d/%%m/%%Y"
       OPENVPNMONITOR_DEFAULT_LATITUDE: -37
-      OPENVPNMONITOR_DEFAULT_LOGO: logo.jpg
+      # OPENVPNMONITOR_DEFAULT_LOGO: logo.jpg
       OPENVPNMONITOR_DEFAULT_LONGITUDE: 144
       OPENVPNMONITOR_DEFAULT_MAPS: True
       OPENVPNMONITOR_DEFAULT_MAPSHEIGHT: 500
       OPENVPNMONITOR_DEFAULT_SITE: Test
       OPENVPNMONITOR_SITES_0_ALIAS: UDP
-      OPENVPNMONITOR_SITES_0_HOST: openvpn
+      OPENVPNMONITOR_SITES_0_HOST: localhost
       OPENVPNMONITOR_SITES_0_NAME: UDP
       OPENVPNMONITOR_SITES_0_PORT: 5555
       OPENVPNMONITOR_SITES_0_SHOWDISCONNECT: True
-
-#   prometheus:
-#     depends_on:
-#       - openvpn-exporter
-#     image: prom/prometheus:latest
-#     container_name: prometheus
-#     restart: unless-stopped
-#     command:
-#       - "--config.file=/etc/prometheus/prometheus.yml"
-#     ports:
-#       - 9090:9090
-#     volumes:
-#       - db:/prometheus
-#       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-
-#   grafana:
-#     depends_on:
-#       - prometheus
-#     image: grafana/grafana:latest
-#     container_name: grafana
-#     restart: unless-stopped
-#     env_file:
-#       - ./envs/grafana.env
-#     volumes:
-#       - db:/var/lib/grafana
-#       - ./grafana/provisioning/:/etc/grafana/provisioning/:ro
-#       - ./grafana/dashboards/openvpn-dashboard.json:/var/lib/grafana/dashboards/openvpn-dashboard.json
-#     ports:
-#       - 3000:3000
-
-# volumes:
-#   db:
+    network_mode: host
+    restart: unless-stopped
+    stop_grace_period: 30s

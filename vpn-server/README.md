@@ -93,3 +93,7 @@ sudo iptables -A FORWARD -i ens5 -o tun0 -m state --state RELATED,ESTABLISHED -j
 pwd # examples/vpn-server/docker
 docker compose up -d
 ```
+
+### VPN monitor 접속
+
+![vpn_monitor](../images/vpn_result.png)
