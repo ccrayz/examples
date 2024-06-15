@@ -1,42 +1,6 @@
 # VPN Server
 
-# Installs
-
-install package
-```
-brew install pyenv
-brew install pyenv-virtualenv
-```
-
-setup path
-```
-# code ~/.zshrc
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-# pyenv-virtualenv setting
-eval "$(pyenv virtualenv-init -)"
-```
-
-pyenv version list
-```
-pyenv install --list
-pyenv install 3.12.2
-```
-
-```
-# 전역으로 적용
-pyenv global 3.12.2
-
-# 현재 프로젝트에만 적용
-pyenv local 3.12.2
-
-# verions check
-python -V && pip -V
-```
-
-
-# Terraform
-
+## Terraform
 
 ### 1. Setup Allow cidr
 ```bash
@@ -57,8 +21,16 @@ terrform apply
 ```
 
 
-# Docker
+## Docker
+
+위에서 생성한 EC2에 접속 후 이후 단계를 진행한다.
+> SSH 키는 ec2를 만들때 생성해두었음으로 해당키를 사용하여 접속한다.
+
 ```bash
+pwd # ~/examples/vpn-server
+ssh -i ssh/vpn-ec2-keypair ubuntu@${EC2_PUB_IP}
+
+
 cd ./examples/vpn-server/docker
 ```
 
@@ -118,6 +90,6 @@ sudo iptables -A FORWARD -i ens5 -o tun0 -m state --state RELATED,ESTABLISHED -j
 
 ### vpn 서버 실행
 ```bash
-# examples/vpn-server/docker 에서 실행해야 한다.
+pwd # examples/vpn-server/docker
 docker compose up -d
 ```
