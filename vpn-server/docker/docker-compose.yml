@@ -1,0 +1,59 @@
+version: "3"
+services:
+  openvpn:
+    image: kylemanna/openvpn
+    container_name: openvpn
+    ports:
+      - "1194:1194/udp"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - EASYRSA_KEY_SIZE=4096
+      - EASYRSA_REQ_CN=${VPN_ENDPOINT_DNS}
+    volumes:
+      - ${VPN_MOUNT_PATH}:/etc/openvpn
+    restart: always
+
+  openvpn-exporter:
+    depends_on:
+      - openvpn
+    image: kumina/openvpn-exporter
+    container_name: openvpn-exporter
+    ports:
+      - 9176:9176
+    command:
+      - -openvpn.status_paths=/etc/openvpn_exporter/openvpn-status.status
+    volumes:
+      - ${VPN_MOUNT_PATH}/openvpn-status.status:/etc/openvpn_exporter/openvpn-status.status
+
+  prometheus:
+    depends_on:
+      - openvpn-exporter
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - 9090:9090
+    volumes:
+      - db:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    depends_on:
+      - prometheus
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    env_file:
+      - ./envs/grafana.env
+    volumes:
+      - db:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/:ro
+      - ./grafana/dashboards/openvpn-dashboard.json:/var/lib/grafana/dashboards/openvpn-dashboard.json
+    ports:
+      - 3000:3000
+
+volumes:
+  db:
